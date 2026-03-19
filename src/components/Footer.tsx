@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 export function Footer() {
@@ -25,12 +26,9 @@ export function Footer() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3.5 py-1.5 no-underline transition-colors hover:border-violet-300"
         >
-          {/* Placeholder for M8ven logo — swap with <Image src="/m8ven-logo.png" .../> when ready */}
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-violet-600 text-[10px] font-bold text-white">
-            M
-          </span>
+          <Image src="/m8ven-logo.png" alt="M8ven" width={20} height={20} className="rounded shrink-0" />
           <span className="text-[11.5px] text-gray-400">
-            Trust data powered by <strong className="font-medium text-gray-600">M8ven</strong>
+            Powered by <strong className="font-medium text-gray-600">M8ven</strong>
           </span>
         </a>
       </div>
