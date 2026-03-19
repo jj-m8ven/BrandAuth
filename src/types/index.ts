@@ -1,6 +1,6 @@
 export type UserRole = 'brand' | 'vendor'
 
-export type AuthorizationStatus = 'authorized' | 'pending' | 'revoked' | 'suspended' | 'expired'
+export type AuthorizationStatus = 'active' | 'pending' | 'revoked' | 'suspended' | 'expired'
 
 export interface Session {
   userId: string
@@ -26,49 +26,52 @@ export interface Brand {
   logoUrl?: string
   categories: string[]
   status: string
+  authorization_tiers?: Tier[]
 }
 
-export interface Vendor {
-  id: string
-  name: string
+export interface Distributor {
+  distributor_id: string
+  distributor_name: string
   email: string
-  passportId: string
-  passportScore?: number
+  business_tax_id?: string
+  authorization_tier: string
+  platforms: string[]
+  sku_scope: string | null
+  status: AuthorizationStatus
+  seller_id?: string
+  passport_url?: string
+  created_at: string
+  updated_at?: string
 }
 
 export interface Authorization {
-  id: string
-  brandId: string
-  brandName: string
-  brandLogoUrl?: string
-  vendorId: string
-  vendorName: string
-  tier: string
-  channels: string[]
-  status: AuthorizationStatus
-  authorizedAt: string
-  expiresAt?: string
+  authorized: boolean
+  distributor_id: string
+  brand_name: string
+  authorization_tier: string
+  sku_scope: string | null
+  platforms: string[]
+  passport_url?: string
 }
 
 export interface Application {
   id: string
-  brandId: string
-  vendorId: string
-  vendorName: string
-  passportScore?: number
-  tier: string
-  channels: string[]
-  skuScope?: string
+  brand_id: string
+  distributor_name: string
+  email: string
+  business_tax_id?: string
+  passport_score?: number
+  authorization_tier: string
+  platforms: string[]
+  sku_scope: string | null
   message?: string
   status: 'pending' | 'approved' | 'denied'
-  createdAt: string
+  created_at: string
 }
 
 export interface Tier {
   id: string
-  name: string
-  description: string
-  channels: string[]
+  label: string
 }
 
 export interface ApiKey {
@@ -89,15 +92,28 @@ export interface Webhook {
 export interface ActivityEvent {
   id: string
   action: 'granted' | 'revoked' | 'applied' | 'suspended'
-  vendorName: string
+  distributor_name: string
   timestamp: string
 }
 
 export interface BrandStats {
-  totalVendors: number
+  totalDistributors: number
   pendingApplications: number
   activeApiKeys: number
-  credentialsThisMonth: number
+  checksThisMonth: number
+}
+
+export interface UsageStats {
+  period: string
+  auth_check_count: number
+  response_times: {
+    avg_ms: number
+    p95_ms: number
+  }
+  daily_breakdown: {
+    date: string
+    count: number
+  }[]
 }
 
 export interface ApiError {

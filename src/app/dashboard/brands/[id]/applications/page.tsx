@@ -4,7 +4,6 @@ import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import useSWR from 'swr'
 import { fetcher, apiPatch } from '@/lib/fetcher'
-import { M8venPassportBadge } from '@/components/ui/M8venPassportBadge'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useAppStore } from '@/stores/appStore'
@@ -41,7 +40,7 @@ export default function ApplicationsPage() {
   const [infoLoading, setInfoLoading] = useState(false)
 
   const { data, mutate, isLoading } = useSWR<ApplicationsResponse>(
-    `/api/m8ven/brands/${brandId}/applications?status=${tab}`,
+    `/api/m8ven/api/v1/brand-auth/distributors?brand_id=${brandId}&status=${tab}`,
     fetcher,
     { refreshInterval: tab === 'pending' ? 60000 : 0 }
   )
@@ -53,13 +52,14 @@ export default function ApplicationsPage() {
     if (!approveTarget) return
     setApproveLoading(true)
     try {
-      await apiPatch(`/api/m8ven/applications/${approveTarget.id}`, {
-        status: 'approved',
-        tier: approveTier || approveTarget.tier,
-        skuScope: approveSkuScope || undefined,
-        expiresAt: approveExpiry || undefined,
+      await apiPatch(`/api/m8ven/api/v1/brand-auth/distributors`, {
+        distributor_id: approveTarget.id,
+        status: 'active',
+        authorization_tier: approveTier || approveTarget.authorization_tier,
+        sku_scope: approveSkuScope || null,
+        expires_at: approveExpiry || undefined,
       })
-      addToast({ message: `Approved ${approveTarget.vendorName}.`, type: 'success' })
+      addToast({ message: `Approved ${approveTarget.distributor_name}.`, type: 'success' })
       setApproveTarget(null)
       setApproveTier('')
       setApproveSkuScope('')
@@ -79,11 +79,12 @@ export default function ApplicationsPage() {
     if (!denyTarget) return
     setDenyLoading(true)
     try {
-      await apiPatch(`/api/m8ven/applications/${denyTarget.id}`, {
+      await apiPatch(`/api/m8ven/api/v1/brand-auth/distributors`, {
+        distributor_id: denyTarget.id,
         status: 'denied',
         message: denyReason || undefined,
       })
-      addToast({ message: `Denied ${denyTarget.vendorName}.`, type: 'success' })
+      addToast({ message: `Denied ${denyTarget.distributor_name}.`, type: 'success' })
       setDenyTarget(null)
       setDenyReason('')
       mutate()
@@ -101,11 +102,12 @@ export default function ApplicationsPage() {
     if (!infoTarget || !infoMessage.trim()) return
     setInfoLoading(true)
     try {
-      await apiPatch(`/api/m8ven/applications/${infoTarget.id}`, {
+      await apiPatch(`/api/m8ven/api/v1/brand-auth/distributors`, {
+        distributor_id: infoTarget.id,
         status: 'pending',
         message: infoMessage,
       })
-      addToast({ message: `Requested info from ${infoTarget.vendorName}.`, type: 'success' })
+      addToast({ message: `Requested info from ${infoTarget.distributor_name}.`, type: 'success' })
       setInfoTarget(null)
       setInfoMessage('')
     } catch (err) {
@@ -120,8 +122,8 @@ export default function ApplicationsPage() {
 
   const openApprove = (app: Application) => {
     setApproveTarget(app)
-    setApproveTier(app.tier)
-    setApproveSkuScope(app.skuScope || '')
+    setApproveTier(app.authorization_tier)
+    setApproveSkuScope(app.sku_scope || '')
     setApproveExpiry('')
   }
 
@@ -196,19 +198,16 @@ export default function ApplicationsPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-900">{app.vendorName}</h3>
-                    {app.passportScore != null && (
-                      <M8venPassportBadge score={app.passportScore} />
-                    )}
+                    <h3 className="font-semibold text-gray-900">{app.distributor_name}</h3>
                   </div>
                   <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
-                    <span>Tier: {app.tier}</span>
+                    <span>Tier: {app.authorization_tier}</span>
                     <span>&middot;</span>
-                    <span>Channels: {app.channels.join(', ')}</span>
-                    {app.skuScope && (
+                    <span>Platforms: {app.platforms.join(', ')}</span>
+                    {app.sku_scope && (
                       <>
                         <span>&middot;</span>
-                        <span>SKU: {app.skuScope}</span>
+                        <span>SKU: {app.sku_scope}</span>
                       </>
                     )}
                   </div>
@@ -219,7 +218,7 @@ export default function ApplicationsPage() {
                   )}
                   <p className="mt-2 text-xs text-gray-400">
                     Applied{' '}
-                    {new Date(app.createdAt).toLocaleDateString('en-US', {
+                    {new Date(app.created_at).toLocaleDateString('en-US', {
                       dateStyle: 'medium',
                     })}
                   </p>
@@ -258,11 +257,11 @@ export default function ApplicationsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-900">
-              Approve {approveTarget.vendorName}
+              Approve {approveTarget.distributor_name}
             </h3>
             <div className="mt-4 space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Tier</label>
+                <label className="block text-sm font-medium text-gray-700">Authorization Tier</label>
                 <input
                   type="text"
                   value={approveTier}
@@ -317,7 +316,7 @@ export default function ApplicationsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-900">
-              Deny {denyTarget.vendorName}
+              Deny {denyTarget.distributor_name}
             </h3>
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700">
@@ -354,7 +353,7 @@ export default function ApplicationsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-900">
-              Request info from {infoTarget.vendorName}
+              Request info from {infoTarget.distributor_name}
             </h3>
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700">Message</label>

@@ -28,19 +28,19 @@ export default function BrandDashboard() {
   const brandId = params.id as string
 
   const { data: stats, error: statsError } = useSWR<BrandStats>(
-    `/api/m8ven/brands/${brandId}/stats`,
+    `/api/m8ven/api/v1/usage?period=current_month`,
     fetcher,
     { refreshInterval: 60000 }
   )
 
   const { data: activity } = useSWR<ActivityEvent[]>(
-    `/api/m8ven/brands/${brandId}/activity?limit=10`,
+    `/api/m8ven/api/v1/brand-auth/distributors?status=active&limit=10`,
     fetcher,
     { refreshInterval: 60000 }
   )
 
   const { data: pendingData } = useSWR<{ count: number }>(
-    `/api/m8ven/brands/${brandId}/applications?status=pending&limit=1`,
+    `/api/m8ven/api/v1/brand-auth/distributors?status=pending&limit=1`,
     fetcher,
     { refreshInterval: 60000 }
   )
@@ -68,8 +68,8 @@ export default function BrandDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          label="Total Vendors"
-          value={statsError ? '--' : (stats?.totalVendors ?? '--')}
+          label="Total Distributors"
+          value={statsError ? '--' : (stats?.totalDistributors ?? '--')}
         />
         <StatCard
           label="Pending Applications"
@@ -80,8 +80,8 @@ export default function BrandDashboard() {
           value={statsError ? '--' : (stats?.activeApiKeys ?? '--')}
         />
         <StatCard
-          label="Credentials This Month"
-          value={statsError ? '--' : (stats?.credentialsThisMonth ?? '--')}
+          label="Auth Checks This Month"
+          value={statsError ? '--' : (stats?.checksThisMonth ?? '--')}
         />
       </div>
 
@@ -100,7 +100,7 @@ export default function BrandDashboard() {
           href={`/dashboard/brands/${brandId}/vendors`}
           className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
-          View all vendors
+          View all distributors
         </Link>
         <Link
           href={`/dashboard/brands/${brandId}/settings`}
@@ -118,7 +118,7 @@ export default function BrandDashboard() {
       <div className="mt-8">
         <h2 className="text-sm font-semibold text-gray-900">Recent Activity</h2>
 
-        {activity && activity.length > 0 ? (
+        {activity && Array.isArray(activity) && activity.length > 0 ? (
           <div className="mt-4 space-y-3">
             {activity.map((event) => {
               const badge = actionLabels[event.action] ?? {
@@ -136,7 +136,7 @@ export default function BrandDashboard() {
                     >
                       {badge.text}
                     </span>
-                    <span className="text-sm text-gray-900">{event.vendorName}</span>
+                    <span className="text-sm text-gray-900">{event.distributor_name}</span>
                   </div>
                   <span className="text-xs text-gray-400">
                     {new Date(event.timestamp).toLocaleDateString('en-US', {
@@ -150,7 +150,7 @@ export default function BrandDashboard() {
               )
             })}
           </div>
-        ) : activity && activity.length === 0 ? (
+        ) : activity && Array.isArray(activity) && activity.length === 0 ? (
           <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
             <p className="text-sm font-medium text-gray-900">No activity yet</p>
             <p className="mt-1 text-sm text-gray-500">

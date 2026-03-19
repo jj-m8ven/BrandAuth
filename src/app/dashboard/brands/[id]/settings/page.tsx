@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation'
 import { useState } from 'react'
-import useSWR, { useSWRConfig } from 'swr'
+import useSWR from 'swr'
 import { fetcher, apiPost, apiPatch, apiDelete } from '@/lib/fetcher'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { CopyButton } from '@/components/ui/CopyButton'
@@ -54,7 +54,7 @@ export default function BrandSettingsPage() {
   )
 }
 
-// ── Tiers Tab ──
+// -- Tiers Tab --
 
 function TiersTab({ brandId }: { brandId: string }) {
   const addToast = useAppStore((s) => s.addToast)
@@ -63,14 +63,13 @@ function TiersTab({ brandId }: { brandId: string }) {
     fetcher
   )
   const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState({ name: '', description: '', channels: '' })
+  const [form, setForm] = useState({ id: '', label: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Tier | null>(null)
 
   const handleAdd = async () => {
-    const channels = form.channels.split(',').map((c) => c.trim()).filter(Boolean)
-    const result = tierSchema.safeParse({ name: form.name, description: form.description, channels })
+    const result = tierSchema.safeParse({ id: form.id, label: form.label })
     if (!result.success) {
       const errs: Record<string, string> = {}
       for (const issue of result.error.issues) errs[issue.path[0] as string] = issue.message
@@ -85,10 +84,10 @@ function TiersTab({ brandId }: { brandId: string }) {
 
     setLoading(true)
     try {
-      await apiPost(`/api/m8ven/brands/${brandId}/tiers`, { name: form.name, description: form.description, channels })
+      await apiPost(`/api/m8ven/brands/${brandId}/tiers`, { id: form.id, label: form.label })
       addToast({ message: 'Tier created.', type: 'success' })
       setShowAdd(false)
-      setForm({ name: '', description: '', channels: '' })
+      setForm({ id: '', label: '' })
       setErrors({})
       mutate()
     } catch (err) {
@@ -113,7 +112,7 @@ function TiersTab({ brandId }: { brandId: string }) {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">Configure authorization tiers for your vendors.</p>
+        <p className="text-sm text-gray-500">Configure authorization tiers for your distributors.</p>
         <button
           onClick={() => setShowAdd(true)}
           className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-700"
@@ -135,9 +134,8 @@ function TiersTab({ brandId }: { brandId: string }) {
           {tiers.map((tier) => (
             <div key={tier.id} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
               <div>
-                <p className="font-medium text-gray-900">{tier.name}</p>
-                <p className="text-xs text-gray-500">{tier.description}</p>
-                <p className="mt-1 text-xs text-gray-400">Channels: {tier.channels.join(', ')}</p>
+                <p className="font-medium text-gray-900">{tier.label}</p>
+                <p className="text-xs text-gray-400">ID: {tier.id}</p>
               </div>
               <button
                 onClick={() => setDeleteTarget(tier)}
@@ -156,23 +154,18 @@ function TiersTab({ brandId }: { brandId: string }) {
             <h3 className="text-lg font-semibold text-gray-900">Add tier</h3>
             <div className="mt-4 space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                <label className="block text-sm font-medium text-gray-700">ID (snake_case slug)</label>
+                <input type="text" value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })}
+                  placeholder="e.g. gold_partner"
                   className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+                {errors.id && <p className="mt-1 text-xs text-red-600">{errors.id}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                <label className="block text-sm font-medium text-gray-700">Label (display name)</label>
+                <input type="text" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })}
+                  placeholder="e.g. Gold Partner"
                   className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                {errors.description && <p className="mt-1 text-xs text-red-600">{errors.description}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Channels (comma-separated)</label>
-                <input type="text" placeholder="Amazon, TikTok, Own site" value={form.channels}
-                  onChange={(e) => setForm({ ...form, channels: e.target.value })}
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                {errors.channels && <p className="mt-1 text-xs text-red-600">{errors.channels}</p>}
+                {errors.label && <p className="mt-1 text-xs text-red-600">{errors.label}</p>}
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
@@ -190,7 +183,7 @@ function TiersTab({ brandId }: { brandId: string }) {
       {deleteTarget && (
         <ConfirmModal
           title="Delete tier"
-          message={`Delete tier "${deleteTarget.name}"? This cannot be undone.`}
+          message={`Delete tier "${deleteTarget.label}"? This cannot be undone.`}
           confirmLabel="Delete"
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
@@ -201,7 +194,7 @@ function TiersTab({ brandId }: { brandId: string }) {
   )
 }
 
-// ── API Keys Tab ──
+// -- API Keys Tab --
 
 function ApiKeysTab({ brandId }: { brandId: string }) {
   const addToast = useAppStore((s) => s.addToast)
@@ -345,7 +338,7 @@ function ApiKeysTab({ brandId }: { brandId: string }) {
   )
 }
 
-// ── Webhooks Tab ──
+// -- Webhooks Tab --
 
 const WEBHOOK_EVENTS = [
   'authorization.granted',
@@ -356,7 +349,7 @@ const WEBHOOK_EVENTS = [
 function WebhooksTab({ brandId }: { brandId: string }) {
   const addToast = useAppStore((s) => s.addToast)
   const { data: webhooks, mutate } = useSWR<Webhook[]>(
-    `/api/m8ven/brands/${brandId}/webhooks`,
+    `/api/m8ven/api/brands/webhooks?brand_id=${brandId}`,
     fetcher
   )
   const [showAdd, setShowAdd] = useState(false)
@@ -385,7 +378,11 @@ function WebhooksTab({ brandId }: { brandId: string }) {
     }
     setLoading(true)
     try {
-      await apiPost(`/api/m8ven/brands/${brandId}/webhooks`, form)
+      await apiPost(`/api/m8ven/api/brands/webhooks`, {
+        brand_id: brandId,
+        url: form.url,
+        events: form.events,
+      })
       addToast({ message: 'Webhook added.', type: 'success' })
       setShowAdd(false)
       setForm({ url: '', events: [] })
@@ -401,10 +398,10 @@ function WebhooksTab({ brandId }: { brandId: string }) {
   const handleTest = async (whId: string) => {
     setTesting(whId)
     try {
-      await apiPost(`/api/m8ven/brands/${brandId}/webhooks/${whId}/test`, {})
+      await apiPost(`/api/m8ven/api/brands/webhooks/${whId}/test`, { brand_id: brandId })
       addToast({ message: 'Test webhook sent successfully.', type: 'success' })
     } catch {
-      addToast({ message: 'Webhook test failed — check the URL is reachable and returns 200.', type: 'error' })
+      addToast({ message: 'Webhook test failed -- check the URL is reachable and returns 200.', type: 'error' })
     } finally {
       setTesting(null)
     }
@@ -413,7 +410,7 @@ function WebhooksTab({ brandId }: { brandId: string }) {
   const handleDelete = async () => {
     if (!deleteTarget) return
     try {
-      await apiDelete(`/api/m8ven/brands/${brandId}/webhooks/${deleteTarget.id}`)
+      await apiDelete(`/api/m8ven/api/brands/webhooks/${deleteTarget.id}?brand_id=${brandId}`)
       addToast({ message: 'Webhook deleted.', type: 'success' })
       setDeleteTarget(null)
       mutate()
@@ -510,7 +507,7 @@ function WebhooksTab({ brandId }: { brandId: string }) {
   )
 }
 
-// ── Profile Tab ──
+// -- Profile Tab --
 
 function ProfileTab({ brandId }: { brandId: string }) {
   const addToast = useAppStore((s) => s.addToast)

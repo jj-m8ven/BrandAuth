@@ -33,23 +33,26 @@ export const vendorSignupSchema = z.object({
   path: ['confirmPassword'],
 })
 
-export const addVendorSchema = z.object({
+export const addDistributorSchema = z.object({
+  distributor_name: z.string().min(1, 'Distributor name is required'),
   email: z.string().email('Enter a valid email address'),
-  tier: z.string().min(1, 'Select a tier'),
-  skuScope: z.string().optional(),
+  business_tax_id: z.string().optional(),
+  authorization_tier: z.string().min(1, 'Select a tier'),
+  platforms: z.array(z.string()).min(1, 'Select at least one platform'),
+  sku_scope: z.string().nullable().optional(),
+  seller_id: z.string().nullable().optional(),
 })
 
 export const applicationSchema = z.object({
-  tier: z.string().min(1, 'Select a tier'),
-  channels: z.array(z.string()).min(1, 'Select at least one channel'),
-  skuScope: z.string().optional(),
+  authorization_tier: z.string().min(1, 'Select a tier'),
+  platforms: z.array(z.string()).min(1, 'Select at least one platform'),
+  sku_scope: z.string().nullable().optional(),
   message: z.string().optional(),
 })
 
 export const tierSchema = z.object({
-  name: z.string().min(1, 'Tier name is required'),
-  description: z.string().min(1, 'Description is required'),
-  channels: z.array(z.string()).min(1, 'Select at least one channel'),
+  id: z.string().min(1, 'Tier ID is required'),
+  label: z.string().min(1, 'Tier label is required'),
 })
 
 export const webhookSchema = z.object({
@@ -61,7 +64,7 @@ export type LoginInput = z.infer<typeof loginSchema>
 export type BrandSignupStep1Input = z.infer<typeof brandSignupStep1Schema>
 export type BrandSignupStep2Input = z.infer<typeof brandSignupStep2Schema>
 export type VendorSignupInput = z.infer<typeof vendorSignupSchema>
-export type AddVendorInput = z.infer<typeof addVendorSchema>
+export type AddDistributorInput = z.infer<typeof addDistributorSchema>
 export type ApplicationInput = z.infer<typeof applicationSchema>
 export type TierInput = z.infer<typeof tierSchema>
 export type WebhookInput = z.infer<typeof webhookSchema>

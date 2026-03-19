@@ -13,6 +13,15 @@ export default function ApplyPage() {
   return <ApplyForm authenticated />
 }
 
+const PLATFORMS = [
+  { value: 'amazon', label: 'Amazon' },
+  { value: 'ebay', label: 'eBay' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'open_web', label: 'Open Web' },
+  { value: 'retail', label: 'Retail' },
+  { value: 'wholesale', label: 'Wholesale' },
+]
+
 export function ApplyForm({ authenticated }: { authenticated: boolean }) {
   const params = useParams()
   const router = useRouter()
@@ -23,28 +32,31 @@ export function ApplyForm({ authenticated }: { authenticated: boolean }) {
   const { data: tiers } = useSWR<Tier[]>(`/api/m8ven/brands/${brandSlug}/tiers`, fetcher)
 
   const [form, setForm] = useState({
-    tier: '',
-    channels: [] as string[],
-    skuScope: '',
+    authorization_tier: '',
+    platforms: [] as string[],
+    sku_scope: '',
     message: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
-  const CHANNELS = ['Amazon', 'TikTok Shop', 'eBay', 'Own Website', 'Retail', 'Wholesale']
-
-  const toggleChannel = (ch: string) => {
+  const togglePlatform = (platform: string) => {
     setForm((prev) => ({
       ...prev,
-      channels: prev.channels.includes(ch)
-        ? prev.channels.filter((c) => c !== ch)
-        : [...prev.channels, ch],
+      platforms: prev.platforms.includes(platform)
+        ? prev.platforms.filter((p) => p !== platform)
+        : [...prev.platforms, platform],
     }))
   }
 
   const handleSubmit = async () => {
-    const result = applicationSchema.safeParse(form)
+    const result = applicationSchema.safeParse({
+      authorization_tier: form.authorization_tier,
+      platforms: form.platforms,
+      sku_scope: form.sku_scope || null,
+      message: form.message || undefined,
+    })
     if (!result.success) {
       const errs: Record<string, string> = {}
       for (const issue of result.error.issues) errs[issue.path[0] as string] = issue.message
@@ -62,10 +74,11 @@ export function ApplyForm({ authenticated }: { authenticated: boolean }) {
 
     setLoading(true)
     try {
-      await apiPost(`/api/m8ven/brands/${brandSlug}/applications`, {
-        tier: form.tier,
-        channels: form.channels,
-        skuScope: form.skuScope || undefined,
+      await apiPost(`/api/m8ven/api/v1/brand-auth/distributors`, {
+        brand_id: brandSlug,
+        authorization_tier: form.authorization_tier,
+        platforms: form.platforms,
+        sku_scope: form.sku_scope || null,
         message: form.message || undefined,
       })
       setSubmitted(true)
@@ -134,7 +147,7 @@ export function ApplyForm({ authenticated }: { authenticated: boolean }) {
           <h2 className="text-lg font-semibold text-gray-900">Apply for authorization</h2>
 
           <div className="mt-6 space-y-5">
-            {/* Tier */}
+            {/* Authorization Tier */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Authorization tier</label>
               {tiers ? (
@@ -143,22 +156,21 @@ export function ApplyForm({ authenticated }: { authenticated: boolean }) {
                     <label
                       key={tier.id}
                       className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
-                        form.tier === tier.name
+                        form.authorization_tier === tier.id
                           ? 'border-violet-300 bg-violet-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       <input
                         type="radio"
-                        name="tier"
-                        value={tier.name}
-                        checked={form.tier === tier.name}
-                        onChange={() => setForm({ ...form, tier: tier.name })}
+                        name="authorization_tier"
+                        value={tier.id}
+                        checked={form.authorization_tier === tier.id}
+                        onChange={() => setForm({ ...form, authorization_tier: tier.id })}
                         className="mt-0.5 text-violet-600 focus:ring-violet-500"
                       />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{tier.name}</p>
-                        <p className="text-xs text-gray-500">{tier.description}</p>
+                        <p className="text-sm font-medium text-gray-900">{tier.label}</p>
                       </div>
                     </label>
                   ))}
@@ -170,28 +182,28 @@ export function ApplyForm({ authenticated }: { authenticated: boolean }) {
                   ))}
                 </div>
               )}
-              {errors.tier && <p className="mt-1 text-xs text-red-600">{errors.tier}</p>}
+              {errors.authorization_tier && <p className="mt-1 text-xs text-red-600">{errors.authorization_tier}</p>}
             </div>
 
-            {/* Channels */}
+            {/* Platforms */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Channels you intend to sell on
+                Platforms you intend to sell on
               </label>
               <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {CHANNELS.map((ch) => (
-                  <label key={ch} className="flex items-center gap-2 text-sm text-gray-700">
+                {PLATFORMS.map((platform) => (
+                  <label key={platform.value} className="flex items-center gap-2 text-sm text-gray-700">
                     <input
                       type="checkbox"
-                      checked={form.channels.includes(ch)}
-                      onChange={() => toggleChannel(ch)}
+                      checked={form.platforms.includes(platform.value)}
+                      onChange={() => togglePlatform(platform.value)}
                       className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
-                    {ch}
+                    {platform.label}
                   </label>
                 ))}
               </div>
-              {errors.channels && <p className="mt-1 text-xs text-red-600">{errors.channels}</p>}
+              {errors.platforms && <p className="mt-1 text-xs text-red-600">{errors.platforms}</p>}
             </div>
 
             {/* SKU scope */}
@@ -202,8 +214,8 @@ export function ApplyForm({ authenticated }: { authenticated: boolean }) {
               <input
                 type="text"
                 placeholder="Leave blank for all products"
-                value={form.skuScope}
-                onChange={(e) => setForm({ ...form, skuScope: e.target.value })}
+                value={form.sku_scope}
+                onChange={(e) => setForm({ ...form, sku_scope: e.target.value })}
                 className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
               />
             </div>

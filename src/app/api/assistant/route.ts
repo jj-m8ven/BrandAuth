@@ -9,43 +9,32 @@ const M8VEN_API_KEY = process.env.M8VEN_API_KEY!
 const tools: AITool[] = [
   {
     name: 'check_brand_authorization',
-    description: 'Check if a specific vendor is authorized by a specific brand. Returns authorization status, tier, and channels.',
+    description: 'Check if a specific seller/distributor is authorized by a brand. Accepts seller_name, seller_id, or business_tax_id. Returns authorization status, tier, and platforms.',
     parameters: {
       type: 'object',
       properties: {
-        brand_id: { type: 'string', description: 'The brand ID or slug' },
-        vendor_id: { type: 'string', description: 'The vendor ID or passport ID' },
+        seller_name: { type: 'string', description: 'The seller/distributor name to check' },
+        seller_id: { type: 'string', description: 'The seller ID to check' },
+        business_tax_id: { type: 'string', description: 'The business tax ID to check' },
       },
-      required: ['brand_id', 'vendor_id'],
+      required: [],
     },
   },
   {
     name: 'get_brand_vendors',
-    description: 'Get a list of vendors authorized by a brand. Can filter by status.',
+    description: 'Get a list of active authorized distributors for a brand.',
     parameters: {
       type: 'object',
       properties: {
-        brand_id: { type: 'string', description: 'The brand ID' },
-        status: { type: 'string', description: 'Filter by status', enum: ['authorized', 'pending', 'revoked', 'suspended'] },
+        status: { type: 'string', description: 'Filter by status', enum: ['active', 'pending', 'revoked', 'suspended'] },
         limit: { type: 'number', description: 'Max results to return (default 20)' },
       },
-      required: ['brand_id'],
-    },
-  },
-  {
-    name: 'get_vendor_credentials',
-    description: 'Get all brand authorization credentials for a vendor.',
-    parameters: {
-      type: 'object',
-      properties: {
-        passport_id: { type: 'string', description: 'The vendor passport ID' },
-      },
-      required: ['passport_id'],
+      required: [],
     },
   },
   {
     name: 'get_brand_applications',
-    description: 'Get pending applications for a brand. Only available to brand users.',
+    description: 'Get pending applications for a brand. Only available to brand users. Note: this endpoint is not yet confirmed.',
     parameters: {
       type: 'object',
       properties: {
@@ -57,24 +46,36 @@ const tools: AITool[] = [
   },
   {
     name: 'get_brand_stats',
-    description: 'Get dashboard statistics for a brand: total vendors, pending applications, active API keys, credentials issued this month.',
+    description: 'Get usage statistics for the current billing period: auth check count, response times, and daily breakdown.',
     parameters: {
       type: 'object',
       properties: {
-        brand_id: { type: 'string', description: 'The brand ID' },
+        period: { type: 'string', description: 'The period to query (default: current_month)', enum: ['current_month'] },
       },
-      required: ['brand_id'],
+      required: [],
     },
   },
 ]
 
-async function callM8venApi(path: string, userId: string): Promise<unknown> {
-  const res = await fetch(`${M8VEN_API_URL}/${path}`, {
+interface CallM8venApiOptions {
+  method?: 'GET' | 'POST'
+  body?: Record<string, unknown>
+}
+
+async function callM8venApi(path: string, userId: string, options: CallM8venApiOptions = {}): Promise<unknown> {
+  const { method = 'GET', body } = options
+  const fetchOptions: RequestInit = {
+    method,
     headers: {
       'Authorization': `Bearer ${M8VEN_API_KEY}`,
       'X-User-Id': userId,
+      'Content-Type': 'application/json',
     },
-  })
+  }
+  if (body && method === 'POST') {
+    fetchOptions.body = JSON.stringify(body)
+  }
+  const res = await fetch(`${M8VEN_API_URL}/${path}`, fetchOptions)
   return res.json()
 }
 
@@ -83,36 +84,41 @@ async function executeTool(name: string, args: Record<string, unknown>, userId: 
     let result: unknown
 
     switch (name) {
-      case 'check_brand_authorization':
+      case 'check_brand_authorization': {
+        const body: Record<string, unknown> = {}
+        if (args.seller_name) body.seller_name = args.seller_name
+        if (args.seller_id) body.seller_id = args.seller_id
+        if (args.business_tax_id) body.business_tax_id = args.business_tax_id
         result = await callM8venApi(
-          `v1/brand-auth/check?brandId=${args.brand_id}&vendorId=${args.vendor_id}`,
+          'api/v1/brand-auth/check',
+          userId,
+          { method: 'POST', body }
+        )
+        break
+      }
+      case 'get_brand_vendors': {
+        const status = (args.status as string) || 'active'
+        const limit = (args.limit as number) || 20
+        result = await callM8venApi(
+          `api/v1/brand-auth/distributors?status=${status}&limit=${limit}`,
           userId
         )
         break
-      case 'get_brand_vendors':
-        result = await callM8venApi(
-          `brands/${args.brand_id}/distributors?limit=${args.limit || 20}${args.status ? `&status=${args.status}` : ''}`,
-          userId
-        )
-        break
-      case 'get_vendor_credentials':
-        result = await callM8venApi(
-          `vendors/${args.passport_id}/authorizations`,
-          userId
-        )
-        break
+      }
       case 'get_brand_applications':
         result = await callM8venApi(
-          `brands/${args.brand_id}/applications?status=${args.status || 'pending'}`,
+          `api/v1/brand-auth/distributors?brand_id=${args.brand_id}&status=${args.status || 'pending'}`,
           userId
         )
         break
-      case 'get_brand_stats':
+      case 'get_brand_stats': {
+        const period = (args.period as string) || 'current_month'
         result = await callM8venApi(
-          `brands/${args.brand_id}/stats`,
+          `api/v1/usage?period=${period}`,
           userId
         )
         break
+      }
       default:
         return JSON.stringify({ error: 'Unknown tool' })
     }

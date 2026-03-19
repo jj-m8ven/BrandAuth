@@ -7,7 +7,7 @@ import { AuthorizationBadge } from '@/components/ui/AuthorizationBadge'
 import { TierBadge } from '@/components/ui/TierBadge'
 import { M8venPassportBadge } from '@/components/ui/M8venPassportBadge'
 import Link from 'next/link'
-import type { Authorization, Brand } from '@/types'
+import type { Brand } from '@/types'
 
 interface VendorProfile {
   name: string
@@ -15,9 +15,21 @@ interface VendorProfile {
   passportScore?: number
 }
 
+interface DistributorCredential {
+  distributor_id: string
+  distributor_name: string
+  brand_name: string
+  authorization_tier: string
+  platforms: string[]
+  sku_scope: string | null
+  status: 'active' | 'revoked' | 'suspended' | 'pending'
+  created_at: string
+  expires_at?: string
+}
+
 export default function VendorDashboard() {
   const { data: profile } = useSWR<VendorProfile>('/api/m8ven/vendors/me', fetcher)
-  const { data: authorizations } = useSWR<Authorization[]>(
+  const { data: authorizations } = useSWR<DistributorCredential[]>(
     '/api/m8ven/vendors/me/authorizations',
     fetcher
   )
@@ -82,34 +94,30 @@ export default function VendorDashboard() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {authorizations.map((auth) => (
               <Link
-                key={auth.id}
-                href={`/vendor/credentials/${auth.id}`}
+                key={auth.distributor_id}
+                href={`/vendor/credentials/${auth.distributor_id}`}
                 className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
               >
                 <div className="flex items-center gap-3">
-                  {auth.brandLogoUrl ? (
-                    <img src={auth.brandLogoUrl} alt={auth.brandName} className="h-10 w-10 rounded-lg object-contain" />
-                  ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-sm font-bold text-violet-600">
-                      {auth.brandName.charAt(0)}
-                    </div>
-                  )}
-                  <span className="font-semibold text-gray-900">{auth.brandName}</span>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-sm font-bold text-violet-600">
+                    {auth.brand_name.charAt(0)}
+                  </div>
+                  <span className="font-semibold text-gray-900">{auth.brand_name}</span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <AuthorizationBadge status={auth.status} />
-                  <TierBadge tier={auth.tier} />
+                  <TierBadge tier={auth.authorization_tier} />
                 </div>
                 <div className="mt-3 text-xs text-gray-500">
-                  <p>Channels: {auth.channels.join(', ')}</p>
+                  <p>Platforms: {auth.platforms.join(', ')}</p>
                   <p>
                     Since{' '}
-                    {new Date(auth.authorizedAt).toLocaleDateString('en-US', { dateStyle: 'medium' })}
+                    {new Date(auth.created_at).toLocaleDateString('en-US', { dateStyle: 'medium' })}
                   </p>
-                  {auth.expiresAt && (
+                  {auth.expires_at && (
                     <p>
                       Expires{' '}
-                      {new Date(auth.expiresAt).toLocaleDateString('en-US', { dateStyle: 'medium' })}
+                      {new Date(auth.expires_at).toLocaleDateString('en-US', { dateStyle: 'medium' })}
                     </p>
                   )}
                 </div>
