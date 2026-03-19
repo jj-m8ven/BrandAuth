@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Footer } from '@/components/Footer'
 
 export default function HomePage() {
   return (
@@ -71,10 +72,7 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-200 py-8 text-center text-sm text-gray-400">
-        BrandGraph &mdash; a product built on M8ven
-      </footer>
+      <Footer />
     </div>
   )
 }

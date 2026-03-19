@@ -3,6 +3,7 @@ import { CopyButton } from '@/components/ui/CopyButton'
 import { AuthorizationBadge } from '@/components/ui/AuthorizationBadge'
 import { TierBadge } from '@/components/ui/TierBadge'
 import { M8venPassportBadge } from '@/components/ui/M8venPassportBadge'
+import { Footer } from '@/components/Footer'
 import type { AuthorizationStatus } from '@/types'
 
 const M8VEN_API_URL = process.env.NEXT_PUBLIC_M8VEN_API_URL!
@@ -279,9 +280,7 @@ export default async function PublicVerifyPage({ params }: PageProps) {
         </div>
       </main>
 
-      <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-400">
-        BrandGraph &mdash; powered by M8ven
-      </footer>
+      <Footer />
     </div>
   )
 }
