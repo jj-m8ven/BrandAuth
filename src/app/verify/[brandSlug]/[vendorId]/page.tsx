@@ -49,17 +49,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (data.not_found || data.error || !data.brand_name) {
     return {
-      title: 'Verification — BrandGraph',
+      title: 'Verification — Mercavi',
       description: 'Check distributor authorization status.',
     }
   }
 
   return {
     title: `${data.distributor_id} is ${data.authorized ? 'authorized by' : 'not authorized by'} ${data.brand_name}`,
-    description: `Verify distributor authorization status with ${data.brand_name} on BrandGraph.`,
+    description: `Verify distributor authorization status with ${data.brand_name} on Mercavi.`,
     openGraph: {
       title: `${data.distributor_id} is ${data.authorized ? 'authorized by' : 'not authorized by'} ${data.brand_name}`,
-      description: `Real-time distributor authorization verification powered by BrandGraph.`,
+      description: `Real-time distributor authorization verification powered by Mercavi.`,
     },
   }
 }
@@ -112,7 +112,7 @@ export default async function PublicVerifyPage({ params }: PageProps) {
   }
 
   const isAuthorized = data.authorized === true
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://brandgraph.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mercavi.com'
   const verifyUrl = `${appUrl}/verify/${brandSlug}/${vendorId}`
 
   return (
@@ -120,7 +120,7 @@ export default async function PublicVerifyPage({ params }: PageProps) {
       {/* Header */}
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-4">
-          <span className="text-lg font-bold text-gray-900">BrandGraph</span>
+          <span className="text-lg font-bold text-gray-900">Mercavi</span>
           <span className="text-xs text-gray-400">Verification</span>
         </div>
       </header>

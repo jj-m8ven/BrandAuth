@@ -7,7 +7,7 @@ export default function HomePage() {
       {/* Nav */}
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-xl font-bold text-gray-900">BrandGraph</span>
+          <span className="text-xl font-bold text-gray-900">Mercavi</span>
           <div className="flex items-center gap-4">
             <Link
               href="/auth/login"
@@ -31,7 +31,7 @@ export default function HomePage() {
           Know who&apos;s authorized to sell your brand
         </h1>
         <p className="mt-6 max-w-lg text-lg text-gray-500">
-          BrandGraph gives brands a simple way to authorize vendors, issue verifiable
+          Mercavi gives brands a simple way to authorize vendors, issue verifiable
           credentials, and let anyone check authorization status in real time.
         </p>
         <div className="mt-10 flex gap-4">

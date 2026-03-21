@@ -6,7 +6,7 @@ export function Footer() {
     <footer className="border-t border-gray-200 px-5 md:px-8 py-6">
       <div className="mx-auto flex max-w-6xl items-center justify-between flex-wrap gap-4">
         <p className="text-xs text-gray-400 font-light">
-          &copy; {new Date().getFullYear()} BrandGraph &middot;{' '}
+          &copy; {new Date().getFullYear()} Mercavi &middot;{' '}
           <Link href="/privacy" className="text-violet-600 no-underline hover:text-violet-500">
             Privacy
           </Link>{' '}
@@ -21,7 +21,7 @@ export function Footer() {
         </p>
 
         <a
-          href="https://m8ven.com/developers?ref=brandgraph"
+          href="https://m8ven.com/developers?ref=mercavi"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3.5 py-1.5 no-underline transition-colors hover:border-violet-300"

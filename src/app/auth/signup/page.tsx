@@ -6,7 +6,7 @@ export default function SignupPage() {
       <div className="w-full max-w-md text-center">
         <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
         <p className="mt-2 text-sm text-gray-500">
-          Choose how you&apos;ll use BrandGraph
+          Choose how you&apos;ll use Mercavi
         </p>
 
         <div className="mt-8 grid gap-4">

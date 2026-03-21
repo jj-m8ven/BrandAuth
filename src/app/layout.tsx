@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BrandGraph — Brand Authorization Network",
+  title: "Mercavi — Brand Authorization Network",
   description: "Manage your authorized vendor network with verifiable credentials.",
 };
 

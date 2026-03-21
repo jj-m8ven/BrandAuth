@@ -130,7 +130,7 @@ async function executeTool(name: string, args: Record<string, unknown>, userId: 
 }
 
 function buildSystemPrompt(session: { role: string; brandId?: string; passportId?: string }): string {
-  let prompt = `You are BrandGraph Assistant. You help brands and vendors manage product authorization. The current user is a ${session.role}.`
+  let prompt = `You are Mercavi Assistant. You help brands and vendors manage product authorization. The current user is a ${session.role}.`
 
   if (session.role === 'brand' && session.brandId) {
     prompt += ` You are managing brand ID: ${session.brandId}.`
